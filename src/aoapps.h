@@ -23,7 +23,7 @@
 
 
 // Identifies lib version
-#define AOAPPS_VERSION "0.2.9"
+#define AOAPPS_VERSION "0.2.10"
 
 
 // Include the (headers of the) modules of this app

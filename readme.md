@@ -94,12 +94,12 @@ This library contains several modules, see figure below (arrows indicate `#inclu
   It is the app manager. It implements a register of apps in the
   sketch. It implements functions to start, step and stop an app. These
   are called from the main loop, and forwarded to the running app.
-  In practive, the `step()` function is constantly called from the main loop 
+  In practice, the `step()` function is constantly called from the main loop 
   and manages the animation implemented by the app.
   
-  This module also implements a command (to be registered with `aocmd_cint` if
-  so desired). This handler allows the user see which apps are included, which
-  is running, and it allows to switch the running app.
+  This module also implements a command (to be registered with `aocmd_cint` 
+  if so desired). This handler allows the user to see which apps are 
+  available, which is running, and it allows to switch the running app.
   
 - **aoapps_runled** (`aoapps_runled.cpp` and `aoapps_runled.h`) is one of the stock apps.
   - There is a "virtual cursor" that runs from the begin of the chain to the end and then back.
@@ -113,9 +113,9 @@ This library contains several modules, see figure below (arrows indicate `#inclu
 - **aoapps_swflag** (`aoapps_swflag.cpp` and `aoapps_swflag.h`) is one of the stock apps.
   - Shows one (static) flag at a time, eg the Dutch national flag red/white/blue spread over the OSP chain.
   - Tries to find a SAID with an I2C bridge with an I/O-expander (with four buttons and four indicator LEDs).
-  - If there is no I/O expander, shows four static flags switching on a time basis.
+  - If there is no I/O-expander, shows four static flags switching on a time basis.
   - If there are multiple I/O-expanders the first one is taken.
-  - When an I/O expander is found the four buttons select which flag to show.
+  - When an I/O-expander is found the four buttons select which flag to show.
   - The indicator LEDs connected to the I/O-expander indicate which button/flag was selected.
   - The X and Y buttons control the dim level (RGB brightness).
   - This app adds a command to configure which four flags will be shown.
@@ -213,7 +213,7 @@ so desired). This handler allows the user manage apps.
 ### aoapps_swflag
 
 - `aoapps_swflag_register()` registers the swflag app with the app manager.
-- `aoresult_t aoapps_swflag_resethw()` resets the I/O expander, thereby 
+- `aoresult_t aoapps_swflag_resethw()` resets the I/O-expander, thereby 
   switching off the indicator LEDs attached to it. This helps reset the PCB
   state when the MCU is reset.
 
@@ -283,9 +283,9 @@ This module also implements a command `apps` (to be registered with
 - switch to a different app
 - configure an app
 
-If an individual app has something to configure, its shall pass its configuration 
-handler (just another command handler) during its registration with the 
-app manager. As an example see the registration of the `swflag` app:
+If an individual app has something to configure, its shall pass its 
+configuration handler (just another command handler) during its registration 
+with the app manager. As an example see the registration of the `swflag` app:
 
 ```cpp
 // The registration function for app swflag.
@@ -302,7 +302,7 @@ help string `aoapps_swflag_cmd_help` and a configuration command function
 `aoapps_swflag_cmd_main`. 
 
 The command handlers that configure and app are not top-level commands,
-rather they are subcommands of the `apps config` command.
+rather they are sub-commands of the `apps config` command.
 
 When running `apps config` a list is shown of configurable apps.
 The help string for an app is shown when the user executes the 
@@ -321,9 +321,9 @@ SYNTAX: apps config swflag set <flag1> <flag2> <flag3> <flag4>
 - configures four flags (from list)
 ```
 
-We see that the `swflag` app has three config commands: `list` shows
-which flags are available, `get` shows which four flags are configured
-and `set` configures four flags.
+We see that the `swflag` app has three configuration commands: `list` shows
+which flags are available, `get` shows which four flags are configured (that 
+is, associated with the four buttons) and `set` configures four flags.
 
 Typically, the wanted four flags would be set with `file record` in 
 the `boot.cmd` which is executed at startup, for example:
@@ -348,6 +348,9 @@ of the OSP chain, without app telegrams interfering.
 
 
 ## Version history _aoapps_
+
+- **2024 November 29, 0.2.10**
+  - Fixed typos (including I/O-expander).
 
 - **2024 October 8, 0.2.9**  
   - Fixed parsing problems Doxygen.
