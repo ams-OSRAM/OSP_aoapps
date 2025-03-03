@@ -39,10 +39,11 @@ typedef void       (*aoapps_mngr_cmd_t)( int argc, char * argv[] );
 
 // Extra features can be enabled in the app manager
 #define AOAPPS_MNGR_FLAGS_NONE        0x00
-#define AOAPPS_MNGR_FLAGS_WITHTOPO    0x01
-#define AOAPPS_MNGR_FLAGS_WITHREPAIR  0x02
-#define AOAPPS_MNGR_FLAGS_NEXTONERR   0x04
-#define AOAPPS_MNGR_FLAGS_ALL         (AOAPPS_MNGR_FLAGS_WITHTOPO | AOAPPS_MNGR_FLAGS_WITHREPAIR | AOAPPS_MNGR_FLAGS_NEXTONERR ) 
+#define AOAPPS_MNGR_FLAGS_HIDDEN      0x01
+#define AOAPPS_MNGR_FLAGS_WITHTOPO    0x02
+#define AOAPPS_MNGR_FLAGS_WITHREPAIR  0x04
+#define AOAPPS_MNGR_FLAGS_NEXTONERR   0x08
+#define AOAPPS_MNGR_FLAGS_ALL         (AOAPPS_MNGR_FLAGS_HIDDEN | AOAPPS_MNGR_FLAGS_WITHTOPO | AOAPPS_MNGR_FLAGS_WITHREPAIR | AOAPPS_MNGR_FLAGS_NEXTONERR ) 
 
 // To register an app pass its (identifier and oled) name, help text for the two buttons, feature flags, pointers to its three handlers, command handler and command help. Asserts when no more free slots.
 void aoapps_mngr_register(const char * name, const char * oled, const char * xlbl, const char * ylbl, int flags, aoapps_mngr_start_t start, aoapps_mngr_step_t step, aoapps_mngr_stop_t stop, aoapps_mngr_cmd_t cmd, const char * help);  

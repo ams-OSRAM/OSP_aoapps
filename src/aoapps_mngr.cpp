@@ -27,8 +27,8 @@
 
 
 // === voidapp ===============================================================
-// The void app, doing nothing, allowing unhindered USB commands
-// It is always registered (in init), but not part of switchnext()
+// The voidapp, doing nothing, allowing unhindered USB commands
+// It is always registered (in init), but hidden, ie not part of switchnext()
 
 
 static aoresult_t aoapps_mngr_voidapp_start() { 
@@ -48,7 +48,7 @@ static void aoapps_mngr_voidapp_stop () {
 
 void aoapps_mngr_voidapp_register() {
   aoapps_mngr_register("voidapp", "USB command", "--", "--", 
-    0, /* no dither, no repair */
+    AOAPPS_MNGR_FLAGS_HIDDEN, 
     aoapps_mngr_voidapp_start, aoapps_mngr_voidapp_step, aoapps_mngr_voidapp_stop, 
     0, 0 /* no config command */ );
 }
@@ -362,8 +362,8 @@ void aoapps_mngr_stop() {
             0 <= appix < aoapps_mngr_app_count()
     @note   It is an error when the current app is "stop" (must be "run").
     @note   See `aoapps_mngr_start()` for start/stop/current/appix terminology.
-    @note   aoapps_mngr_switch(0) will select the voidapp; the function
-            aoapps_mngr_switchnext() skips the voidapp.
+    @note   `aoapps_mngr_switch(0)` will select the voidapp like any other hidden 
+	        app; the function `aoapps_mngr_switchnext()` skips them.
     @note   See `aoapps_mngr_switchnext()`.
 */            
 void aoapps_mngr_switch(int appix) {
@@ -374,13 +374,18 @@ void aoapps_mngr_switch(int appix) {
 
 /*!
     @brief  Stops the current app and starts the next one.
-    @note   The next one in the sense of appix (registration order).
-    @note   Wraps around to appix 1 (so skips voidapp).
+    @note   The "next one" is in the sense of registration order.
+    @note   Wraps around, and skips apps that have their hidden flag set.
+    @note   If all apps are hidden does nothing (stays at app).
     @note   It is an error when the current app is "stop" (must be "run").
     @note   See `aoapps_mngr_start()` for start/stop/current/appix terminology.
 */            
 void aoapps_mngr_switchnext() {
-  aoapps_mngr_switch( aoapps_mngr_appix % (aoapps_mngr_count-1) + 1);
+  int appix= aoapps_mngr_appix;
+  do {
+    appix= (appix+1) % aoapps_mngr_count;
+  } while( (aoapps_mngr_apps[appix].flags & AOAPPS_MNGR_FLAGS_HIDDEN) &&  (appix!=aoapps_mngr_appix) );
+  if( appix!=aoapps_mngr_appix ) aoapps_mngr_switch(appix);
 }
 
 
@@ -476,7 +481,7 @@ static aoresult_t aoapps_mngr_stepwithtopo() {
         if( aoapps_mngr_error!=aoresult_ok ) aoapps_mngr_state= AOAPPS_MNGR_STATE_ERROR;
         return aoresult_ok; // loop topo build
       }
-      Serial.printf("%s: starting on %d RGBs\n", aoapps_mngr_apps[aoapps_mngr_appix].name, aomw_topo_numtriplets() );
+      // Serial.printf("%s: starting on %d RGBs\n", aoapps_mngr_apps[aoapps_mngr_appix].name, aomw_topo_numtriplets() );
       aoapps_mngr_error= aoapps_mngr_apps[aoapps_mngr_appix].start(); // call start of app
       if( aoapps_mngr_error!=aoresult_ok ) aoapps_mngr_state= AOAPPS_MNGR_STATE_ERROR;
       aoapps_mngr_state= AOAPPS_MNGR_STATE_APPANIM;
@@ -555,12 +560,13 @@ static void aoapps_mngr_cmd_listone(int appix) {
   if( appix!=cur ) mode= "stop";
   else if( run ) mode= "run"; 
   else mode= "idle";
-  char flags[4]="tre";
-  if( aoapps_mngr_apps[appix].flags & AOAPPS_MNGR_FLAGS_WITHTOPO   ) flags[0]='T';
-  if( aoapps_mngr_apps[appix].flags & AOAPPS_MNGR_FLAGS_WITHREPAIR ) flags[1]='R';
-  if( aoapps_mngr_apps[appix].flags & AOAPPS_MNGR_FLAGS_NEXTONERR  ) flags[2]='E';
+  char flags[]="htre";
+  if( aoapps_mngr_apps[appix].flags & AOAPPS_MNGR_FLAGS_HIDDEN     ) flags[0]='H';
+  if( aoapps_mngr_apps[appix].flags & AOAPPS_MNGR_FLAGS_WITHTOPO   ) flags[1]='T';
+  if( aoapps_mngr_apps[appix].flags & AOAPPS_MNGR_FLAGS_WITHREPAIR ) flags[2]='R';
+  if( aoapps_mngr_apps[appix].flags & AOAPPS_MNGR_FLAGS_NEXTONERR  ) flags[3]='E';
   const char* oled= aoapps_mngr_app_oled(appix);
-  Serial.printf("%d %-10s %-4s %-5s %s\n",appix,name,mode,flags,oled);
+  Serial.printf("%1d %-10s %-4s %-5s %s\n",appix,name,mode,flags,oled);
 }
 
 
@@ -569,7 +575,7 @@ static void aoapps_mngr_cmd_listall(int verbose) {
   if( verbose ) Serial.printf("# %-10s %-4s %5s %s\n","name","mode","flags","display name");
   for( int appix=0; appix<aoapps_mngr_app_count(); appix++ ) 
     aoapps_mngr_cmd_listone(appix);
-  if( verbose ) Serial.printf("\nflags: T=withtopo R=withrepair, E=nextonerr\n");
+  if( verbose ) Serial.printf("\nflags: H=hidden T=withtopo R=withrepair, E=nextonerr\n");
 }
 
 
@@ -582,7 +588,7 @@ static void aoapps_mngr_cmd( int argc, char * argv[] ) {
     if( argc!=2 ) { Serial.printf("ERROR: too many args\n" ); return; }
     aoapps_mngr_cmd_listall(argv[0][0]!='@');
     return;
-  } else if( aocmd_cint_isprefix("switch",argv[1]) ) {
+  } else if( aocmd_cint_isprefix("switch",argv[1]) || aocmd_cint_isprefix("hide",argv[1])) {
     if( argc!=3 ) { Serial.printf("ERROR: <app> missing\n" ); return; }
     // <app> is number?
     int appix;
@@ -601,8 +607,15 @@ static void aoapps_mngr_cmd( int argc, char * argv[] ) {
       }
     }
     if( appix==-1 ) { Serial.printf("ERROR: no app with name starting with '%s'\n",argv[2] ); return; }
-    aoapps_mngr_switch(appix);
-    if( argv[0][0]!='@' ) aoapps_mngr_cmd_listone(appix);
+    if( aocmd_cint_isprefix("switch",argv[1]) ) {
+      aoapps_mngr_switch(appix);
+      if( argv[0][0]!='@' ) aoapps_mngr_cmd_listone(appix);
+    } else if( aocmd_cint_isprefix("hide",argv[1]) ) {      
+      aoapps_mngr_apps[appix].flags ^= AOAPPS_MNGR_FLAGS_HIDDEN; // toggle hidden flag
+      if( argv[0][0]!='@' ) aoapps_mngr_cmd_listone(appix);
+    } else {
+      AORESULT_ASSERT(false); // can not happen
+    }
     return;
   } else if( aocmd_cint_isprefix("config",argv[1]) ) {
     aoapps_mngr_cmd_config(argc,argv);
@@ -621,6 +634,8 @@ static const char aoapps_mngr_cmd_longhelp[] =
   "- stops current app and starts <app>\n"
   "- <app> is either a name or an id (see list)\n"
   "- <app> 0 is the 'voidapp' (doing nothing): no interference with commands\n"
+  "SYNTAX: apps hide <app>\n"
+  "- toggles hide-flag of <app>; a hidden app is skipped in 'switchnext' list\n"
   "SYNTAX: apps config [...]\n"
   "- without arguments, shows which apps offer configuration\n"
   "- with app name shows help for configuration of that app\n"
@@ -628,6 +643,8 @@ static const char aoapps_mngr_cmd_longhelp[] =
   "NOTES:\n"
   "- supports @-prefix to suppress output\n"
 ;
+
+
 
 
 /*!

@@ -42,6 +42,9 @@ void apps_register() {
 void setup() {
   ...
 
+  // Init the Library
+  aoapps_init();
+  
   // Register all apps
   apps_register();
 
@@ -155,7 +158,7 @@ The headers contain little documentation; for that see the module source files.
 
 ### aoapps
 
-- `aoapps_init()` not really needed, but added for forward compatibility.
+- `aoapps_init()` to initialize the library (the apps manager).
 - `AOAPPS_VERSION`  identifies the version of the library.
 
 
@@ -169,8 +172,9 @@ An important aspect of the app manager is app registration.
   its start, step an stop functions, an optional command handler, and some flags).
 - `aoapps_mngr_start_t`, `aoapps_mngr_step_t`, `aoapps_mngr_stop_t` types for
   to start, step and stop function.
-- `AOAPPS_MNGR_FLAGS_WITHTOPO`, `AOAPPS_MNGR_FLAGS_WITHREPAIR` and 
-  `AOAPPS_MNGR_FLAGS_NEXTONERR` registration flags.
+- `AOAPPS_MNGR_FLAGS_HIDDEN`, `AOAPPS_MNGR_FLAGS_WITHTOPO`, 
+  `AOAPPS_MNGR_FLAGS_WITHREPAIR` and `AOAPPS_MNGR_FLAGS_NEXTONERR` 
+  registration flags.
 - `AOAPPS_MNGR_REGISTRATION_SLOTS` maximum number of apps that can 
   be registered.
 
@@ -269,6 +273,13 @@ the app manager will, when that app returns an error, do as before (stop
 heart beat, switch on red LED, show error on OLED), but after a time-out start
 the next app.
 
+The list of registered apps can become long. For a specific demo, apps
+can be hidden, so that the demonstration can focus on specific apps. 
+When an app is hidden, it is skipped in the `switchnext()` cycle, which is 
+typically executed when pressing the A button. The voidapp registers itself 
+as hidden, for other apps hide them via the command `apps hide <app>`, 
+e.g. in `boot.cmd`.
+
 Some apps have configuration parameters that can be observed and changed via
 a command. The command handler can also be passed during app registration, 
 see the next chapter.
@@ -281,7 +292,8 @@ This module also implements a command `apps` (to be registered with
 
 - show a list of all registered apps
 - switch to a different app
-- configure an app
+- configure an app as hidden
+- configure an app via its handler
 
 If an individual app has something to configure, its shall pass its 
 configuration handler (just another command handler) during its registration 
@@ -335,7 +347,7 @@ the `boot.cmd` which is executed at startup, for example:
 
 The app manager has one app always registered, the "voidapp". This app
 does nothing. It does not start with topo init, its start, step and stop 
-are empty, and it does not deploy repair actions.
+are empty, and it does not deploy repair actions, but it is hidden by default.
 
 This app is useful when the user wants to take over control via the
 Serial over USB command interface. If the user gives the command
@@ -348,6 +360,13 @@ of the OSP chain, without app telegrams interfering.
 
 
 ## Version history _aoapps_
+
+- **2025 March 3, 0.3.0**
+  - Added the feature that an app can be hidden; the `hide` commands toggles.
+  - The voidapp no longer is hardwired hidden; it uses the new hidden feature.
+  - Corrected `swflags` to `swflag`.
+  - Fixed prefix error in `aoapps_swflag.cpp`.
+  - Fixed documentation error for `aoapps_init()`.
 
 - **2024 November 29, 0.2.10**
   - Fixed typos (including I/O-expander).

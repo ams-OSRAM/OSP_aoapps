@@ -55,8 +55,8 @@ GOAL
 
 
 // We have a list of flag painters (indices)
-#define AOMW_SWFLAGS_ANIM_NUMFLAGS 4 // dictated by number of buttons in IOX
-static int aomw_swflags_anim_pix[AOMW_SWFLAGS_ANIM_NUMFLAGS] = { 
+#define AOAPPS_SWFLAG_ANIM_NUMFLAGS 4 // dictated by number of buttons in IOX
+static int aomw_swflag_anim_pix[AOAPPS_SWFLAG_ANIM_NUMFLAGS] = { 
   AOMW_FLAG_PIX_DUTCH, AOMW_FLAG_PIX_MALI, AOMW_FLAG_PIX_EUROPE, AOMW_FLAG_PIX_ITALY 
 };
 
@@ -88,7 +88,7 @@ static aoresult_t aoapps_swflag_anim() {
     // IOX absent: switch flags every AOAPPS_SWFLAG_ANIM_MS
     if( millis()-aoapps_swflag_anim_lastms > AOAPPS_SWFLAG_ANIM_MS ) {
       aoapps_swflag_anim_lastms= millis();
-      flagix= (aoapps_swflag_anim_flagix+1) % AOMW_SWFLAGS_ANIM_NUMFLAGS;
+      flagix= (aoapps_swflag_anim_flagix+1) % AOAPPS_SWFLAG_ANIM_NUMFLAGS;
     }
   }
 
@@ -96,7 +96,7 @@ static aoresult_t aoapps_swflag_anim() {
   if( aoapps_swflag_anim_flagix!=flagix ) {
     aoapps_swflag_anim_flagix = flagix;
     // Paint the flag 
-    result= aomw_flag_painter(aomw_swflags_anim_pix[aoapps_swflag_anim_flagix])();
+    result= aomw_flag_painter(aomw_swflag_anim_pix[aoapps_swflag_anim_flagix])();
     if( result!=aoresult_ok ) return result;
     // Highlight the associated indicator LED
     if( aoapps_swflag_anim_ioxpresent ) {
@@ -130,7 +130,7 @@ static aoresult_t aoapps_swflag_buttons_check() {
     aomw_topo_dim_set(dim); // function clips (no need to do that here)
     // Serial.printf("dim %d\n", aomw_topo_dim_get());
     // Repaint the flag 
-    aoresult_t result= aomw_flag_painter(aomw_swflags_anim_pix[aoapps_swflag_anim_flagix])();
+    aoresult_t result= aomw_flag_painter(aomw_swflag_anim_pix[aoapps_swflag_anim_flagix])();
     if( result!=aoresult_ok ) return result;
   }
   return aoresult_ok;
@@ -154,37 +154,37 @@ static int aoapps_swflag_cmd_find( const char * flag ) {
 
 // Show on Serial which are the four flags
 static void aoapps_swflag_cmd_show( ) {
-  for( int flagix=0; flagix<AOMW_SWFLAGS_ANIM_NUMFLAGS; flagix++ ) {
-    Serial.printf("SW%d %s\n", flagix, aomw_flag_name(aomw_swflags_anim_pix[flagix]) );
+  for( int flagix=0; flagix<AOAPPS_SWFLAG_ANIM_NUMFLAGS; flagix++ ) {
+    Serial.printf("SW%d %s\n", flagix, aomw_flag_name(aomw_swflag_anim_pix[flagix]) );
   }
 }
 
 
-// The handler for the "apps config swflags" command
+// The handler for the "apps config swflag" command
 static void aoapps_swflag_cmd_main( int argc, char * argv[] ) {
   AORESULT_ASSERT( argc>3 );
   if( aocmd_cint_isprefix("list",argv[3]) ) {
-    if( argc!=4 ) { Serial.printf("ERROR: 'swflags' has too many args\n" ); return; }
+    if( argc!=4 ) { Serial.printf("ERROR: 'swflag' has too many args\n" ); return; }
     for( int pix=0; pix<aomw_flag_count(); pix++ ) {
       Serial.printf(" %s\n", aomw_flag_name(pix) );
     }
     return;
   } else if( aocmd_cint_isprefix("get",argv[3]) ) {
-    if( argc!=4 ) { Serial.printf("ERROR: 'swflags' has too many args\n" ); return; }
+    if( argc!=4 ) { Serial.printf("ERROR: 'swflag' has too many args\n" ); return; }
     aoapps_swflag_cmd_show();
     return;
   } else if( aocmd_cint_isprefix("set",argv[3]) ) {
-    if( argc!=8 ) { Serial.printf("ERROR: 'swflags' expects <flag1> <flag2> <flag3> <flag4>\n" ); return; }
-    AORESULT_ASSERT( AOMW_SWFLAGS_ANIM_NUMFLAGS==4 );
+    if( argc!=8 ) { Serial.printf("ERROR: 'swflag' expects <flag1> <flag2> <flag3> <flag4>\n" ); return; }
+    AORESULT_ASSERT( AOAPPS_SWFLAG_ANIM_NUMFLAGS==4 );
     // check if all entered flags exist, if so, copy them over
     for( int flagix=0; flagix<4; flagix++ ) 
-      if( aoapps_swflag_cmd_find(argv[4+flagix])==-1 ) { Serial.printf("ERROR: 'swflags' expects flag name, not '%s'\n", argv[4+flagix] ); return; }
+      if( aoapps_swflag_cmd_find(argv[4+flagix])==-1 ) { Serial.printf("ERROR: 'swflag' expects flag name, not '%s'\n", argv[4+flagix] ); return; }
     for( int flagix=0; flagix<4; flagix++ ) 
-      aomw_swflags_anim_pix[flagix]= aoapps_swflag_cmd_find(argv[4+flagix]);
+      aomw_swflag_anim_pix[flagix]= aoapps_swflag_cmd_find(argv[4+flagix]);
     if( argv[0][0]!='@' ) aoapps_swflag_cmd_show();
     return;
   } else {
-    Serial.printf("ERROR: 'swflags' has unknown argument (%s)\n",argv[3] ); return;
+    Serial.printf("ERROR: 'swflag' has unknown argument (%s)\n",argv[3] ); return;
   }
 }
 
@@ -222,17 +222,17 @@ static aoresult_t aoapps_swflag_start() {
   aoapps_swflag_anim_ioxpresent= result==aoresult_ok;
   // Init IOX
   if( aoapps_swflag_anim_ioxpresent ) {
-    Serial.printf("swflags: using I/O-expander %02x on SAID %03x \n",AOMW_IOX_DADDR7,addr);
+    Serial.printf("swflag: using I/O-expander %02x on SAID %03x \n",AOMW_IOX_DADDR7,addr);
     result= aomw_iox_init( addr ); 
     if( result!=aoresult_ok ) return result;
   } else {
-    Serial.printf("swflags: no I/O-expander found, cycling flags\n");
+    Serial.printf("swflag: no I/O-expander found, cycling flags\n");
   }
   
   // Select first flag
   aoapps_swflag_anim_flagix= 0;
   // Paint the selected flag 
-  result= aomw_flag_painter(aomw_swflags_anim_pix[aoapps_swflag_anim_flagix])(); 
+  result= aomw_flag_painter(aomw_swflag_anim_pix[aoapps_swflag_anim_flagix])(); 
   if( result!=aoresult_ok ) return result;
   // Highlight the associated indicator LED
   if( aoapps_swflag_anim_ioxpresent ) {
